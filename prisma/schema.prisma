@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apiKeys        ApiKey[]
+  courses        Course[]       @relation("FacultyCourses")
+  materials      Material[]
+  attendance     Attendance[]
+  results        Result[]       @relation("StudentResults")
+  createdResults Result[]       @relation("CreatedResults")
+  announcements  Announcement[]
+  events         Event[]
+}
+
+model ApiKey {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String
+  createdById Int
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Result {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  courseId    Int
+  grade       String
+  createdById Int
+  createdBy   User     @relation("CreatedResults", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student User   @relation("StudentResults", fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+}
+
+model Course {
+  id        Int      @id @default(autoincrement())
+  name      String
+  facultyId Int
+  faculty   User     @relation("FacultyCourses", fields: [facultyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  materials   Material[]
+  attendance  Attendance[]
+  results     Result[]
+}
+
+model Material {
+  id           Int      @id @default(autoincrement())
+  courseId     Int
+  title        String
+  description  String?
+  uploadedById Int
+  course       Course   @relation(fields: [courseId], references: [id])
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  createdById Int
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  courseId  Int
+  date      DateTime
+  present   Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User   @relation(fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+}
